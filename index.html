@@ -3,34 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Colgate</title>
-    <!-- Importamos Tailwind CSS para darle estilo rápidamente -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Importamos una fuente de Google Fonts parecida a la de la marca -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+    <title>Speed Stick</title>
     <style>
         body {
-            /* Aplicamos la fuente importada */
-            font-family: 'Montserrat', sans-serif;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+            color: #333;
+            text-align: center;
         }
+
+        /* Cambiamos el color a un azul oscuro */
+        h1 { font-size: 4rem; color: #002B5B; margin-bottom: 0.5rem; letter-spacing: 2px; }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        #btn-mostrar { background-color: #3498db; }
+        #btn-mostrar:hover { background-color: #2980b9; }
+
+        #btn-camara { background-color: #2ecc71; }
+        #btn-camara:hover { background-color: #27ae60; }
+
+        #video-camara {
+            display: none; 
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        #pagina-oculta-iframe {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0; 
+            transition: opacity 0.5s ease;
+        }
+
+        #overlay-experiencia {
+            display: none; 
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            pointer-events: none; 
+        }
+
+        /* ESTILOS DE LA PÍLDORA Y TEXTOS */
+        .pildora {
+            background-color: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        /* Clase para los números (sin fondo, color azul oscuro) */
+        .solo-texto {
+            background-color: transparent;
+            color: #002B5B;
+            font-size: 6rem;
+            font-weight: bold;
+            box-shadow: none;
+            padding: 0;
+        }
+
+        #texto-overlay {
+            display: inline-block;
+        }
+
+        /* ANIMACIONES */
+        @keyframes rebote-numero {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.4); }
+            50% { transform: scale(0.9); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .animar-rebote {
+            animation: rebote-numero 0.5s ease-in-out;
+        }
+
+        @keyframes rebote-final-explora {
+            0% { transform: scale(1); opacity: 1; }
+            40% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .animar-final {
+            animation: rebote-final-explora 1s forwards;
+        }
+
     </style>
 </head>
-<body class="bg-[#E3000F] h-screen w-full flex flex-col items-center justify-center relative m-0 overflow-hidden text-center px-6">
-    
-    <!-- Logo de Colgate en la parte superior -->
-    <h1 class="absolute top-8 md:top-12 text-white text-5xl md:text-7xl font-extrabold tracking-tighter select-none">
-        Colgate
-    </h1>
+<body>
 
-    <!-- Contenedor del mensaje central -->
-    <div class="flex flex-col items-center mt-12 md:mt-16">
-        <h2 class="text-white text-4xl md:text-6xl font-bold mb-6 drop-shadow-md">
-            página web en construcción...
-        </h2>
-        <p class="text-white text-xl md:text-3xl font-medium opacity-90 max-w-4xl leading-relaxed">
-            Este enlace redirigirá a la experiencia de realidad aumentada de SPEED STICK
-        </p>
+    <div id="contenedor-principal">
+        <h1>PROTEX</h1>
+        
+        <div style="display: none;">
+            <button id="btn-mostrar">Ver contenido cargado</button>
+            <button id="btn-camara">Encender Cámara Trasera</button>
+        </div>
+
+        <video id="video-camara" autoplay playsinline></video>
     </div>
+
+    <div id="overlay-experiencia">
+        <div class="pildora" id="pildora-ui">
+            <span id="texto-overlay">Toca aquí para comenzar</span>
+        </div>
+    </div>
+
+    <iframe id="pagina-oculta-iframe" src="https://mywebar.com/p/LadySpeed" allow="camera; microphone"></iframe>
+
+    <script>
+        const btnMostrar = document.getElementById('btn-mostrar');
+        const contenedorPrincipal = document.getElementById('contenedor-principal');
+        const iframeOculto = document.getElementById('pagina-oculta-iframe');
+        const overlayExperiencia = document.getElementById('overlay-experiencia');
+        const textoOverlay = document.getElementById('texto-overlay');
+        const pildoraUI = document.getElementById('pildora-ui');
+        const videoCamara = document.getElementById('video-camara');
+
+        // --- LÓGICA DEL IFRAME OCULTO Y CUENTA REGRESIVA ---
+        btnMostrar.addEventListener('click', () => {
+            contenedorPrincipal.style.display = 'none';
+            iframeOculto.style.display = 'block';
+            
+            overlayExperiencia.style.display = 'block';
+            
+            window.addEventListener('blur', () => {
+                if (document.activeElement === iframeOculto) {
+                    
+                    let contador = 5;
+                    
+                    pildoraUI.classList.remove('pildora');
+                    pildoraUI.classList.add('solo-texto');
+
+                    const actualizarContador = (num) => {
+                        textoOverlay.textContent = num;
+                        textoOverlay.classList.remove('animar-rebote');
+                        void textoOverlay.offsetWidth;
+                        textoOverlay.classList.add('animar-rebote');
+                    };
+
+                    actualizarContador(contador); 
+                    
+                    const intervalo = setInterval(() => {
+                        contador--;
+                        
+                        if (contador > 0) {
+                            actualizarContador(contador);
+                        } else {
+                            clearInterval(intervalo); 
+                            
+                            pildoraUI.classList.remove('solo-texto');
+                            pildoraUI.classList.add('pildora');
+                            textoOverlay.classList.remove('animar-rebote');
+                            
+                            textoOverlay.textContent = "¡Explora!";
+                            
+                            pildoraUI.classList.add('animar-final');
+                            
+                            iframeOculto.style.opacity = '1'; 
+                            
+                            setTimeout(() => {
+                                overlayExperiencia.style.display = 'none';
+                            }, 1000); 
+                        }
+                    }, 1000); 
+                }
+            }, { once: true });
+        });
+
+        // --- FUNCIÓN PARA INICIAR LA CÁMARA TRASERA ---
+        async function iniciarCamara() {
+            try {
+                const restricciones = {
+                    video: { facingMode: "environment" }
+                };
+                const stream = await navigator.mediaDevices.getUserMedia(restricciones);
+                
+                videoCamara.srcObject = stream;
+                videoCamara.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error de cámara:', error);
+                // Opcional: Mostrar un mensaje si el usuario deniega el permiso
+            }
+        }
+
+        // --- ACCIONES AL CARGAR LA PÁGINA ---
+        window.addEventListener('load', () => {
+            // 1. Solicitamos permisos y abrimos la cámara de inmediato
+            iniciarCamara();
+
+            // 2. Ejecutamos el autoclic después de 1 segundo
+            setTimeout(() => {
+                btnMostrar.click();
+            }, 1000); // Considera aumentar este tiempo si quieres que se vea más la cámara inicial
+        });
+    </script>
 
 </body>
 </html>
