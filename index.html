@@ -18,8 +18,13 @@
             text-align: center;
         }
 
-        /* Cambiamos el color a un azul oscuro */
-        h1 { font-size: 4rem; color: #002B5B; margin-bottom: 0.5rem; letter-spacing: 2px; }
+        /* Estilos para la imagen de portada */
+        #imagen-portada {
+            max-width: 80%; /* Evita que la imagen sea más grande que la pantalla */
+            width: 300px; /* Tamaño base sugerido, puedes ajustarlo */
+            margin-bottom: 1rem;
+            height: auto;
+        }
 
         button {
             padding: 12px 24px;
@@ -123,7 +128,7 @@
 <body>
 
     <div id="contenedor-principal">
-        <h1>PROTEX</h1>
+        <img src="portada.png" alt="Portada Protex" id="imagen-portada">
         
         <div style="display: none;">
             <button id="btn-mostrar">Ver contenido cargado</button>
