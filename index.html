@@ -20,8 +20,8 @@
 
         /* Estilos para la imagen de portada */
         #imagen-portada {
-            max-width: 80%; /* Evita que la imagen sea más grande que la pantalla */
-            width: 300px; /* Tamaño base sugerido, puedes ajustarlo */
+            max-width: 80%;
+            width: 300px;
             margin-bottom: 1rem;
             height: auto;
         }
@@ -65,13 +65,25 @@
         }
 
         #overlay-experiencia {
-            display: none; 
+            display: none; /* Se activará como 'flex' en JS */
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 100;
             pointer-events: none; 
+            /* NUEVO: Flexbox para alinear la imagen y la píldora */
+            flex-direction: column;
+            align-items: center;
+            gap: 20px; /* Separación entre imagen y píldora */
+        }
+
+        /* NUEVO: Estilos específicos para la imagen dentro del overlay */
+        #imagen-overlay {
+            max-width: 80vw;
+            width: 250px; /* Un poco más pequeña que la principal, ajústalo a gusto */
+            height: auto;
+            transition: opacity 0.5s ease; /* Transición para cuando desaparezca */
         }
 
         /* ESTILOS DE LA PÍLDORA Y TEXTOS */
@@ -139,6 +151,7 @@
     </div>
 
     <div id="overlay-experiencia">
+        <img src="portada.png" alt="Portada Speed Stick" id="imagen-overlay">
         <div class="pildora" id="pildora-ui">
             <span id="texto-overlay">Toca aquí para comenzar</span>
         </div>
@@ -154,13 +167,15 @@
         const textoOverlay = document.getElementById('texto-overlay');
         const pildoraUI = document.getElementById('pildora-ui');
         const videoCamara = document.getElementById('video-camara');
+        const imagenOverlay = document.getElementById('imagen-overlay'); // Seleccionamos la nueva imagen
 
         // --- LÓGICA DEL IFRAME OCULTO Y CUENTA REGRESIVA ---
         btnMostrar.addEventListener('click', () => {
             contenedorPrincipal.style.display = 'none';
             iframeOculto.style.display = 'block';
             
-            overlayExperiencia.style.display = 'block';
+            // NUEVO: Cambiamos de 'block' a 'flex' para respetar el centrado
+            overlayExperiencia.style.display = 'flex';
             
             window.addEventListener('blur', () => {
                 if (document.activeElement === iframeOculto) {
@@ -195,6 +210,9 @@
                             
                             pildoraUI.classList.add('animar-final');
                             
+                            // NUEVO: Hacemos que la imagen se desvanezca suavemente junto con el texto "¡Explora!"
+                            imagenOverlay.style.opacity = '0'; 
+
                             iframeOculto.style.opacity = '1'; 
                             
                             setTimeout(() => {
@@ -219,19 +237,16 @@
 
             } catch (error) {
                 console.error('Error de cámara:', error);
-                // Opcional: Mostrar un mensaje si el usuario deniega el permiso
             }
         }
 
         // --- ACCIONES AL CARGAR LA PÁGINA ---
         window.addEventListener('load', () => {
-            // 1. Solicitamos permisos y abrimos la cámara de inmediato
             iniciarCamara();
 
-            // 2. Ejecutamos el autoclic después de 1 segundo
             setTimeout(() => {
                 btnMostrar.click();
-            }, 1000); // Considera aumentar este tiempo si quieres que se vea más la cámara inicial
+            }, 1000); 
         });
     </script>
 
