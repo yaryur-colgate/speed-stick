@@ -1,254 +1,223 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html>
+  <head>
+    <meta charset="utf-8">
     <title>Speed Stick</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f4f4f9;
-            margin: 0;
-            color: #333;
-            text-align: center;
-        }
+      /* FIJAR EL BODY */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        position: fixed; 
+      }
 
-        /* Estilos para la imagen de portada */
-        #imagen-portada {
-            max-width: 80%;
-            width: 300px;
-            margin-bottom: 1rem;
-            height: auto;
-        }
+      /* =========================================
+         INTERFAZ DE BIENVENIDA Y CARGA
+         ========================================= */
+      #welcome-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #ffffff;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.5s ease;
+      }
 
-        button {
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 10px;
-            transition: background-color 0.3s ease;
-        }
+      #portada-img {
+        max-width: 70%;
+        max-height: 35vh;
+        object-fit: contain;
+        margin-bottom: 20px; /* Espacio sutil con el siguiente elemento */
+        transition: transform 0.3s ease;
+      }
 
-        #btn-mostrar { background-color: #3498db; }
-        #btn-mostrar:hover { background-color: #2980b9; }
+      /* Contenedor para botones, puntos y cuenta regresiva */
+      .ui-container {
+        height: 150px; /* Espacio reservado fijo para que nada se mueva al cambiar */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-        #btn-camara { background-color: #2ecc71; }
-        #btn-camara:hover { background-color: #27ae60; }
+      /* Animación de los 3 puntitos de carga */
+      #loading-dots {
+        display: flex;
+        gap: 12px;
+      }
 
-        #video-camara {
-            display: none; 
-            width: 100%;
-            max-width: 400px;
-            border-radius: 12px;
-            margin-top: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
+      .dot {
+        width: 16px;
+        height: 16px;
+        background-color: #003366;
+        border-radius: 50%;
+        animation: bounceDot 0.6s infinite alternate;
+      }
 
-        #pagina-oculta-iframe {
-            display: none;
-            width: 100vw;
-            height: 100vh;
-            border: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0; 
-            transition: opacity 0.5s ease;
-        }
+      .dot:nth-child(1) { animation-delay: 0s; }
+      .dot:nth-child(2) { animation-delay: 0.2s; }
+      .dot:nth-child(3) { animation-delay: 0.4s; }
 
-        #overlay-experiencia {
-            display: none; /* Se activará como 'flex' en JS */
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100;
-            pointer-events: none; 
-            /* NUEVO: Flexbox para alinear la imagen y la píldora */
-            flex-direction: column;
-            align-items: center;
-            gap: 20px; /* Separación entre imagen y píldora */
-        }
+      @keyframes bounceDot {
+        from { transform: translateY(0); opacity: 0.6; }
+        to { transform: translateY(-15px); opacity: 1; }
+      }
 
-        /* NUEVO: Estilos específicos para la imagen dentro del overlay */
-        #imagen-overlay {
-            max-width: 80vw;
-            width: 250px; /* Un poco más pequeña que la principal, ajústalo a gusto */
-            height: auto;
-            transition: opacity 0.5s ease; /* Transición para cuando desaparezca */
-        }
+      #startButton {
+        display: none;
+        padding: 15px 40px;
+        font-size: 18px;
+        font-family: sans-serif;
+        font-weight: bold;
+        background-color: #003366;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0px 6px 12px rgba(0,0,0,0.15);
+      }
 
-        /* ESTILOS DE LA PÍLDORA Y TEXTOS */
-        .pildora {
-            background-color: rgba(44, 62, 80, 0.9);
-            color: white;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            text-align: center;
-        }
+      /* Texto de cuenta regresiva (Ya no es position absolute) */
+      #countdown-text {
+        display: none;
+        font-size: 80px;
+        font-family: sans-serif;
+        font-weight: 900;
+        color: #003366;
+        text-align: center;
+        text-transform: uppercase;
+      }
 
-        /* Clase para los números (sin fondo, color azul oscuro) */
-        .solo-texto {
-            background-color: transparent;
-            color: #002B5B;
-            font-size: 6rem;
-            font-weight: bold;
-            box-shadow: none;
-            padding: 0;
-        }
+      .bounce {
+        animation: bounceAnim 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
 
-        #texto-overlay {
-            display: inline-block;
-        }
+      @keyframes bounceAnim {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
 
-        /* ANIMACIONES */
-        @keyframes rebote-numero {
-            0% { transform: scale(1); }
-            30% { transform: scale(1.4); }
-            50% { transform: scale(0.9); }
-            70% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
+      .zoom-out {
+        animation: zoomOutAnim 1s ease-in forwards;
+      }
 
-        .animar-rebote {
-            animation: rebote-numero 0.5s ease-in-out;
-        }
-
-        @keyframes rebote-final-explora {
-            0% { transform: scale(1); opacity: 1; }
-            40% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(2.5); opacity: 0; }
-        }
-
-        .animar-final {
-            animation: rebote-final-explora 1s forwards;
-        }
-
+      @keyframes zoomOutAnim {
+        0% { transform: scale(1); opacity: 1; }
+        40% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(3); opacity: 0; }
+      }
     </style>
-</head>
-<body>
+  </head>
 
-    <div id="contenedor-principal">
-        <img src="portada.png" alt="Portada Speed Stick" id="imagen-portada">
-        
-        <div style="display: none;">
-            <button id="btn-mostrar">Ver contenido cargado</button>
-            <button id="btn-camara">Encender Cámara Trasera</button>
+  <body>
+    
+    <div id="welcome-screen">
+      <img src="speed.png" alt="Portada" id="portada-img">
+      
+      <div class="ui-container">
+        <div id="loading-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
         </div>
 
-        <video id="video-camara" autoplay playsinline></video>
+        <button id="startButton">Toca aquí para comenzar</button>
+
+        <div id="countdown-text"></div>
+      </div>
     </div>
 
-    <div id="overlay-experiencia">
-        <img src="portada.png" alt="Portada Speed Stick" id="imagen-overlay">
-        <div class="pildora" id="pildora-ui">
-            <span id="texto-overlay">Toca aquí para comenzar</span>
-        </div>
-    </div>
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.001; uiLoading: no;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      
+      <a-assets>
+        <video id="mi-video" src="./speed.mp4" preload="auto" loop crossorigin="anonymous" webkit-playsinline playsinline></video>
+        <a-asset-item id="modelo3D" src="./speed.glb"></a-asset-item>
+      </a-assets>
 
-    <iframe id="pagina-oculta-iframe" src="https://mywebar.com/p/YarYurSpeedStick" allow="camera; microphone"></iframe>
+      <a-light type="ambient" color="#FFF" intensity="1"></a-light>
+      <a-light type="directional" color="#FFF" intensity="1.5" position="-1 2 1"></a-light>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-video src="#mi-video" width="1" height="0.5625" position="0 0.1 0"></a-video>
+        <a-entity gltf-model="#modelo3D" scale="0.75 0.75 0.40" position="0.1 -0.5 0.4" animation-mixer></a-entity>
+      </a-entity>
+    </a-scene>
 
     <script>
-        const btnMostrar = document.getElementById('btn-mostrar');
-        const contenedorPrincipal = document.getElementById('contenedor-principal');
-        const iframeOculto = document.getElementById('pagina-oculta-iframe');
-        const overlayExperiencia = document.getElementById('overlay-experiencia');
-        const textoOverlay = document.getElementById('texto-overlay');
-        const pildoraUI = document.getElementById('pildora-ui');
-        const videoCamara = document.getElementById('video-camara');
-        const imagenOverlay = document.getElementById('imagen-overlay'); // Seleccionamos la nueva imagen
+      const welcomeScreen = document.getElementById('welcome-screen');
+      const startButton = document.getElementById('startButton');
+      const loadingDots = document.getElementById('loading-dots');
+      const countdownText = document.getElementById('countdown-text');
+      const video = document.getElementById('mi-video');
+      const target = document.querySelector('[mindar-image-target]');
 
-        // --- LÓGICA DEL IFRAME OCULTO Y CUENTA REGRESIVA ---
-        btnMostrar.addEventListener('click', () => {
-            contenedorPrincipal.style.display = 'none';
-            iframeOculto.style.display = 'block';
-            
-            // NUEVO: Cambiamos de 'block' a 'flex' para respetar el centrado
-            overlayExperiencia.style.display = 'flex';
-            
-            window.addEventListener('blur', () => {
-                if (document.activeElement === iframeOculto) {
-                    
-                    let contador = 5;
-                    
-                    pildoraUI.classList.remove('pildora');
-                    pildoraUI.classList.add('solo-texto');
+      // Tiempo de carga simulado
+      setTimeout(() => {
+        loadingDots.style.display = 'none';
+        startButton.style.display = 'block';
+      }, 3000);
 
-                    const actualizarContador = (num) => {
-                        textoOverlay.textContent = num;
-                        textoOverlay.classList.remove('animar-rebote');
-                        void textoOverlay.offsetWidth;
-                        textoOverlay.classList.add('animar-rebote');
-                    };
+      startButton.addEventListener('click', function () {
+        video.play();
+        video.pause(); 
 
-                    actualizarContador(contador); 
-                    
-                    const intervalo = setInterval(() => {
-                        contador--;
-                        
-                        if (contador > 0) {
-                            actualizarContador(contador);
-                        } else {
-                            clearInterval(intervalo); 
-                            
-                            pildoraUI.classList.remove('solo-texto');
-                            pildoraUI.classList.add('pildora');
-                            textoOverlay.classList.remove('animar-rebote');
-                            
-                            textoOverlay.textContent = "¡Explora!";
-                            
-                            pildoraUI.classList.add('animar-final');
-                            
-                            // NUEVO: Hacemos que la imagen se desvanezca suavemente junto con el texto "¡Explora!"
-                            imagenOverlay.style.opacity = '0'; 
+        startButton.style.display = 'none';
+        countdownText.style.display = 'block';
 
-                            iframeOculto.style.opacity = '1'; 
-                            
-                            setTimeout(() => {
-                                overlayExperiencia.style.display = 'none';
-                            }, 1000); 
-                        }
-                    }, 1000); 
-                }
-            }, { once: true });
-        });
+        const sequence = ["3", "2", "1", "¡Explora!"];
+        let step = 0;
 
-        // --- FUNCIÓN PARA INICIAR LA CÁMARA TRASERA ---
-        async function iniciarCamara() {
-            try {
-                const restricciones = {
-                    video: { facingMode: "environment" }
-                };
-                const stream = await navigator.mediaDevices.getUserMedia(restricciones);
-                
-                videoCamara.srcObject = stream;
-                videoCamara.style.display = 'block';
+        function nextStep() {
+          if (step < sequence.length) {
+            countdownText.innerText = sequence[step];
+            countdownText.className = '';
+            void countdownText.offsetWidth; 
 
-            } catch (error) {
-                console.error('Error de cámara:', error);
+            if (step === sequence.length - 1) {
+              countdownText.style.fontSize = "50px"; 
+              countdownText.classList.add('zoom-out');
+              
+              setTimeout(() => {
+                welcomeScreen.style.opacity = '0';
+                setTimeout(() => {
+                  welcomeScreen.style.display = 'none';
+                }, 500); 
+              }, 1000); 
+
+            } else {
+              countdownText.classList.add('bounce');
+              setTimeout(nextStep, 1000); 
             }
+            step++;
+          }
         }
+        nextStep();
+      });
 
-        // --- ACCIONES AL CARGAR LA PÁGINA ---
-        window.addEventListener('load', () => {
-            iniciarCamara();
+      target.addEventListener("targetFound", () => video.play());
+      target.addEventListener("targetLost", () => video.pause());
 
-            setTimeout(() => {
-                btnMostrar.click();
-            }, 1000); 
-        });
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 300); 
+      });
     </script>
-
-</body>
+  </body>
 </html>
